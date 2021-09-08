@@ -1,0 +1,58 @@
+---
+title: "Data Cleaning in R"
+author: "Aseem Mehrotra"
+date: "07/09/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Cleaning the COVID Data for Analysis
+### Data source: **Bing**
+## Load Packages
+
+```{r Load}
+library(tidyverse)
+library(ggplot2)
+library(sqldf)
+library(lubridate)
+```
+
+## Read Data
+```{r Read}
+## Reading the data
+
+CovidData <- read.csv("BingCovidDataUpdated6sep2021.csv")
+```
+
+## Data Cleaning Steps
+
+```{r Clean}
+## Change name of Updated column to UpdateDate with Date data type
+
+CovidData <- CovidData %>% 
+  mutate(UpdatedDate = mdy(Updated))
+
+## Filter data 
+
+CovidDataA <- CovidData %>% 
+  select(UpdatedDate, Country_Region, AdminRegion1, AdminRegion2, Latitude, Longitude, ConfirmedChange, Confirmed, RecoveredChange, Recovered, DeathsChange, Deaths) %>% 
+  filter(Country_Region == "India") %>% 
+  filter(AdminRegion1 != "") %>% 
+  filter(AdminRegion2 != "")
+
+## Arrange Data
+CovidDataA <- CovidDataA %>% 
+  arrange(AdminRegion1, AdminRegion2)
+CovidDataB <- sqldf("SELECT UpdatedDate AS Date__Date, Country_Region AS Country, AdminRegion1 AS State, AdminRegion2 AS District, Latitude, Longitude, ConfirmedChange AS NewCases, Confirmed AS TotalCases, RecoveredChange AS NewRecovered, Recovered AS TotalRecovered, DeathsChange AS NewDeaths, Deaths AS TotalDeaths FROM CovidDataA ORDER BY State, District, Date__Date DESC", method = "name__class")
+```
+
+## Exporting Data
+
+```{r Export}
+## Export Data in CSV
+write.csv(CovidDataB, "IndiaData.csv")
+```
+
